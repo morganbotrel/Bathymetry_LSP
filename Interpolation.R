@@ -8,6 +8,7 @@ library(sp)
 library(gstat)
 library(lattice)
 library(parallel)
+library(raster)
 
 ##===================##
 #PRÉPARER LES DONNÉES##
@@ -85,20 +86,47 @@ v.fit <- fit.variogram(v.mod, vgm(0.5,"Gau",3000))
 plot(v.mod, v.fit)
 
 #Obtenir le "minimised criterion - weighed sum of square errors from the non-linear regression"
-attr(v.fit, "SSErr")
+attr(v.fit.gau, "SSErr")
 
 ##=============##
 ##INTERPOLATION##
 ##=============##
 
-#Créer ou insérer un raster
+#Créer un raster pour enregistrer les résultats de l'interpolation
+bb <- bbox(dJ12_ag)
+cs <- c(60,60) #Cell size de 60m
+cc <- bb[,1] +(cs/2)
+cd <- ceiling(diff(t(bb))/cs)
+int.grid <- SpatialGrid(GridTopology(cellcentre.offset = cc, cellsize = cs, cells.dim = cd), proj4string = CRS)
 
 #Kriger
-
-
+int <- krige(Z0 ~ 1, dJ12_ag, int.grid, v.fit)
 
 ##================##
 ##CROSS-VALIDATION##
 ##================##
 
+crossval.Gau <- krige(Z0 ~ 1, dJ12_ag[-1,], dJ12_ag[1,], model = v.fit) #, maxdist=200)
+for (i in 2:nrow(dJ12_ag)){
+  k <- krige(TN ~ 1, data[-i,], data[i,], model = v.fit, maxdist=200)
+  crossval.Gau=rbind(crossval.Gau,k);
+}
 
+plot(dJ12_ag$Z0,crossval.Gau$var1.pred,main="Gau")
+
+#Coefficient de correlation de Pearson de la cross-validation
+cor(dJ12_ag$Z0,crossval.Gau$var1.pred) 
+
+
+##==================##
+##EXPORTER LE RASTER## 
+##==================##
+
+#Créer un polygone autour des points (à partir de l'enveloppe convexe)
+ch <- chull(dJ12_ag@coords[,1],dJ12_ag@coords[,2])
+ch_poly<- coordinates(dJ12_ag)[c(ch, ch[1]), ] #Fermer le polygone
+poly <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_poly)), ID=1)))
+poly_df <- SpatialPolygonsDataFrame(poly, data=data.frame(ID=1), proj4string = CRS)
+
+#Clip 
+cr <- crop(int.grid, bb, snap="out")
