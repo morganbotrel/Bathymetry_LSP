@@ -9,6 +9,7 @@ library(gstat)
 library(lattice)
 library(parallel)
 library(raster)
+library(rgdal)
 
 ##===================##
 #PRÉPARER LES DONNÉES##
@@ -82,25 +83,28 @@ v.mod <- variogram(Z0 ~ 1, dJ12_ag, cutoff = 5000, width = 60)
 plot(v.mod) #range 3000,  partial sill 0.5, Gaussian model
 
 #Variogram fitting
-v.fit <- fit.variogram(v.mod, vgm(0.5,"Gau",3000))
+v.fit <- fit.variogram(v.mod, vgm(0.5,"Gau",3000,0.05))
 plot(v.mod, v.fit)
 
 #Obtenir le "minimised criterion - weighed sum of square errors from the non-linear regression"
-attr(v.fit.gau, "SSErr")
+attr(v.fit, "SSErr")
 
 ##=============##
 ##INTERPOLATION##
 ##=============##
 
+#Créer un polygone autour des points (à partir de l'enveloppe convexe)
+ch <- chull(dJ12_ag@coords[,1],dJ12_ag@coords[,2])
+ch_poly<- coordinates(dJ12_ag)[c(ch, ch[1]), ] #Fermer le polygone
+poly <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_poly)), ID=1)))
+
 #Créer un raster pour enregistrer les résultats de l'interpolation
-bb <- bbox(dJ12_ag)
-cs <- c(60,60) #Cell size de 60m
-cc <- bb[,1] +(cs/2)
-cd <- ceiling(diff(t(bb))/cs)
-int.grid <- SpatialGrid(GridTopology(cellcentre.offset = cc, cellsize = cs, cells.dim = cd), proj4string = CRS)
+r <- setValues(raster::raster(ext=extent(polydf),crs = CRS, resolution=60),0)
+rm <- raster::mask(r, poly) 
+grid <- as(rm, "SpatialGridDataFrame")
 
 #Kriger
-int <- krige(Z0 ~ 1, dJ12_ag, int.grid, v.fit)
+krig <- krige(Z0 ~ 1, dJ12_ag, grid, model=v.fit)
 
 ##================##
 ##CROSS-VALIDATION##
@@ -108,25 +112,23 @@ int <- krige(Z0 ~ 1, dJ12_ag, int.grid, v.fit)
 
 crossval.Gau <- krige(Z0 ~ 1, dJ12_ag[-1,], dJ12_ag[1,], model = v.fit) #, maxdist=200)
 for (i in 2:nrow(dJ12_ag)){
-  k <- krige(TN ~ 1, data[-i,], data[i,], model = v.fit, maxdist=200)
+  k <- krige(Z0 ~ 1, dJ12_ag[-i,], dJ12_ag[i,], model = v.fit, maxdist=200)
   crossval.Gau=rbind(crossval.Gau,k);
 }
 
 plot(dJ12_ag$Z0,crossval.Gau$var1.pred,main="Gau")
 
 #Coefficient de correlation de Pearson de la cross-validation
-cor(dJ12_ag$Z0,crossval.Gau$var1.pred) 
+cor(dJ12_ag$Z0,crossval.Gau$var1.pred) #0.9913213
 
 
 ##==================##
 ##EXPORTER LE RASTER## 
 ##==================##
 
-#Créer un polygone autour des points (à partir de l'enveloppe convexe)
-ch <- chull(dJ12_ag@coords[,1],dJ12_ag@coords[,2])
-ch_poly<- coordinates(dJ12_ag)[c(ch, ch[1]), ] #Fermer le polygone
-poly <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_poly)), ID=1)))
-poly_df <- SpatialPolygonsDataFrame(poly, data=data.frame(ID=1), proj4string = CRS)
+writeGDAL(krig["var1.pred"], fname = "Interpolation_maps/Depth_Z0_LSPJ2012.tif", drivername = "GTiff")
+writeGDAL(krig["var1.var"], fname = "Interpolation_maps/DepthError_Z0_LSPJ2012.tif", drivername = "GTiff")
 
-#Clip 
-cr <- crop(int.grid, bb, snap="out")
+
+
+
