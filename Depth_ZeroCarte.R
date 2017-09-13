@@ -5,8 +5,6 @@ rm(list=ls())
 
 #Charger les packages
 library(sp)
-library(gstat)
-library(lattice)
 
 ##====================##
 ##PRÉPARER LES DONNÉES##
