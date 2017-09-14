@@ -1,4 +1,4 @@
-## Bathymetry_LSP ##
+﻿## Bathymetry_LSP ##
 Mis à jour le 14/09/2017
 
 ## DESCRIPTION ##
@@ -52,7 +52,7 @@ Groupe Info Consult responsable de leur acquisition.
 le niveau d'eau
 
 Les documents DepthPHOTO_LSPMonthYear.csv contiennent la correction pour l'objectif 1 et
-les fichiers DepthZC_LSPMonthYear.csv contiennent la correction pour l'objectif 2.
+les documents DepthZC_LSPMonthYear.csv contiennent la correction pour l'objectif 2.
 Les coordonnées géographiques ont également été projetées et converties en UTM zone 8, 
 NAD83.
 
@@ -60,8 +60,8 @@ NAD83.
 geotiff
 
 Pour chaque année et objectif (PHOTO ou Z0) deux types de cartes sont réalisées: 
-la carte des profondeurs (Depth_PROJET_LSPmoisannée.tif)
-et la carte de la variance sur la prédiction (DepthError_PROJET_LSPmoisannée.tif)
+la carte des profondeurs (Depth_OBJECTIF_LSPmoisannée.tif)
+et la carte de la variance sur la prédiction (DepthError_OBJECTIF_LSPmoisannée.tif)
 
 ## SCRIPTS ##
 
