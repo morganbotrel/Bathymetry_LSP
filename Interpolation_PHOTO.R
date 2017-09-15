@@ -121,8 +121,8 @@ cor(dA12$Zphoto,crossval.Gau$var1.pred) #0.9913213
 ##EXPORTER LE RASTER## 
 ##==================##
 
-writeGDAL(krig["var1.pred"], fname = "Interpolated_maps/Depth_ZPHOTO_LSPJ2012.tif", drivername = "GTiff")
-writeGDAL(krig["var1.var"], fname = "Interpolated_maps/DepthError_ZPHOTO_LSPJ2012.tif", drivername = "GTiff")
+writeGDAL(krig["var1.pred"], fname = "Interpolated_maps/Depth_ZPHOTO_LSPA2012.tif", drivername = "GTiff")
+writeGDAL(krig["var1.var"], fname = "Interpolated_maps/DepthError_ZPHOTO_LSPA2012.tif", drivername = "GTiff")
 
 
 
