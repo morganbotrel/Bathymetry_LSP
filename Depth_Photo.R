@@ -11,12 +11,20 @@ library(sp)
 ##====================##
 
 #Ouvrir les données d'échosondage
+echoJ2012 <- read.table("./Raw_data/EchoLSP_Juin_2012_R.csv",header=TRUE,sep=";")
 echoA2012 <- read.table("./Raw_data/EchoLSP_Aout_2012_R.csv",header=TRUE,sep=";")
 echo2013 <- read.table("./Raw_data/EchoLSP_Aout_2013_R.csv",header=TRUE,sep=";")
 echo2014 <- read.table("./Raw_data/EchoLSP_Aout_2014_R.csv",header=TRUE,sep=";")
 echo2015 <- read.table("./Raw_data/EchoLSP_Aout_2015_R.csv",header=TRUE,sep=";")
 
 #Convertir la date et l'heure des fichiers d'échosondage (heure avancée de l'est en GMT) et sélectionner les variables d'intérêt 
+eJ2012 <- data.frame(
+  Date=as.Date(substr(as.character(echoJ2012$Time),1,10)),
+  Time=format(as.POSIXct(substr(echoJ2012$Time,12,19),tz="America/Montreal",format="%H:%M:%S",usetz=TRUE),tz="GMT",format="%H:00"), 
+  Latitude=echoJ2012$Latitude_deg,
+  Longitude=echoJ2012$Longitude_deg,
+  Zecho=abs(echoJ2012$BottomElevation_m)
+) 
 eA2012 <- data.frame(
   Date=as.Date(substr(as.character(echoA2012$Time),1,10)),
   Time=format(as.POSIXct(substr(echoA2012$Time,12,19),tz="America/Montreal",format="%H:%M:%S",usetz=TRUE),tz="GMT",format="%H:00"), 
@@ -68,6 +76,7 @@ photo <- data.frame(
 ##==========================##
 
 #Ajouter le niveau d'eau correspondant à la date et l'heure de l'échosondage
+eJ2012_SLEV<-merge(eJ2012,SLEV,by=c("Date","Time"))
 eA2012_SLEV<-merge(eA2012,SLEV,by=c("Date","Time"))
 eA2013_SLEV<-merge(eA2013,SLEV,by=c("Date","Time"))
 eA2014_SLEV<-merge(eA2014,SLEV,by=c("Date","Time"))
@@ -77,6 +86,7 @@ eA2015_SLEV<-merge(eA2015,SLEV,by=c("Date","Time"))
 photo_SLEV<-merge(photo,SLEV,by=c("Date","Time"))
 
 #Appliquer la correction Zphoto = Zecho + (SLEVphoto - SLEVecho)
+eJ2012_SLEV$Zphoto <- eJ2012_SLEV$Zecho +  (photo_SLEV[1,3] - eJ2012_SLEV$SLEV)
 eA2012_SLEV$Zphoto <- eA2012_SLEV$Zecho +  (photo_SLEV[1,3] - eA2012_SLEV$SLEV)
 #eA2013_SLEV$Zphoto <- eA2013_SLEV$Zecho +  (photo_SLEV[2,3]- eA2013_SLEV$SLEV), date à déterminer
 eA2014_SLEV$Zphoto <- eA2014_SLEV$Zecho +  (photo_SLEV[2,3]- eA2014_SLEV$SLEV)
@@ -87,6 +97,10 @@ eA2015_SLEV$Zphoto <- eA2015_SLEV$Zecho +  (photo_SLEV[3,3]- eA2015_SLEV$SLEV)
 ##=====================================##
 
 #Spatialiser 
+eJ2012_SLEVs<- sp::SpatialPointsDataFrame(
+  coords = cbind(eJ2012_SLEV$Longitude, eJ2012_SLEV$Latitude), 
+  proj4string = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84"), 
+  data= eJ2012_SLEV)
 eA2012_SLEVs<- sp::SpatialPointsDataFrame(
   coords = cbind(eA2012_SLEV$Longitude, eA2012_SLEV$Latitude), 
   proj4string = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84"), 
@@ -105,12 +119,16 @@ eA2015_SLEVs<- sp::SpatialPointsDataFrame(
   data= eA2015_SLEV)
 
 #Convertir en UTM zone 8
+eJ2012_UTM <- sp::spTransform(eJ2012_SLEVs, CRS ("+proj=utm +zone=18 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"))
+eA2012_UTM <- sp::spTransform(eA2012_SLEVs, CRS ("+proj=utm +zone=18 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"))
 eA2012_UTM <- sp::spTransform(eA2012_SLEVs, CRS ("+proj=utm +zone=18 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"))
 eA2013_UTM <- sp::spTransform(eA2013_SLEVs, CRS ("+proj=utm +zone=18 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"))
 eA2014_UTM <- sp::spTransform(eA2014_SLEVs, CRS ("+proj=utm +zone=18 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"))
 eA2015_UTM <- sp::spTransform(eA2015_SLEVs, CRS ("+proj=utm +zone=18 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"))
 
 #Exporter les données
+write.csv(data.frame(Long_UTM18N=eJ2012_UTM@coords[,1],Lat_UTM18N=eJ2012_UTM@coords[,2],eJ2012_SLEV),
+          file="./Corrected_data/DepthPHOTO_LSPJ2012.csv")
 write.csv(data.frame(Long_UTM18N=eA2012_UTM@coords[,1],Lat_UTM18N=eA2012_UTM@coords[,2],eA2012_SLEV),
           file="./Corrected_data/DepthPHOTO_LSPA2012.csv")
 write.csv(data.frame(Long_UTM18N=eA2013_UTM@coords[,1],Lat_UTM18N=eA2013_UTM@coords[,2],eA2013_SLEV),
