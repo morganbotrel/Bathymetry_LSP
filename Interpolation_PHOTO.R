@@ -81,7 +81,7 @@ plot(v.mod) #range 3000,  partial sill 0.5, Gaussian model
 v.fit <- fit.variogram(v.mod, vgm(0.3,"Gau",3000,0.05))
 plot(v.mod, v.fit)
 
-#Obtenir le "minimised criterion - weighed sum of square errors from the non-linear regression"
+ #Obtenir le "minimised criterion - weighed sum of square errors from the non-linear regression"
 attr(v.fit, "SSErr")
 
 ##=============##
