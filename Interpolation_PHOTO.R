@@ -115,12 +115,12 @@ plot(v.cloudA12)
 #plot(sel,dA12)
 #paste(sort(unique(sel[,1])),collapse = ",")
 #Vecteur de la position des valeurs abberrantes
-selA12 <- c(1,2,3,4,5,6,8,9,11,12,13,17,21,22,23,24,25,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,54,92,103,104,105,106,107,108,109,110,111,117,118,124,125,126,134,135,136,137,138,139,169,170,180,181,182)
+selA12 <- c(2,3,4,5,9,12,13,17,21,22,23,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,54,104,105,106,107,108,109,110,117,118,124,125,126,134,135,136,137,138,180,181)
 #Enlever les outliers
 dA12 <- dA12[-c(selA12),]
 #Examiner les variogrammes à nouveau
 v.cloudA12 <- gstat::variogram(Zphoto ~ 1, dA12, cloud = TRUE)
-plot(v.cloudA12) #Le variogramme est magnifique!
+plot(v.cloudA12) 
 
 #Examiner le variogramme pour détecter les valeurs abberrantes **AOUT 2014**
 v.cloudA14 <- gstat::variogram(Zphoto ~ 1, dA14, cloud = TRUE)
@@ -152,56 +152,166 @@ plot(v.dir) #Les différences entre les directions sont mineures
 
 
 #Modifier le cutoff (distance pour laquelles les paires de points sont considérées) et le width (la largeur des "bins")
-v.mod <- variogram(Zphoto ~ 1, dA12, cutoff = 3500, width = 60)
-plot(v.mod) #range 3000,  partial sill 0.5, Gaussian model
+v.modJ12 <- variogram(Zphoto ~ 1, dJ12, cutoff = 3500, width = 60)
+v.modA12 <- variogram(Zphoto ~ 1, dA12, cutoff = 3500, width = 60)
+#v.modA13 <- variogram(Zphoto ~ 1, dA13, cutoff = 3500, width = 60)
+v.modA14 <- variogram(Zphoto ~ 1, dA14, cutoff = 3500, width = 60)
+v.modA15 <- variogram(Zphoto ~ 1, dA15, cutoff = 3500, width = 60)
+plot(v.modJ12) #range 3000,  partial sill 0.5, nugget 0.01,Gaussian model
+plot(v.modA12) #range 3000,  partial sill 0.3, nugget 0.02, Gaussian model
+plot(v.modA14) #range 3000,  partial sill 0.3, nugget 0.02, Gaussian model
+plot(v.modA15) #range 2000,  partial sill 0.25, nugget 0.01, Gaussian model
+
 
 #Variogram fitting
-v.fit <- fit.variogram(v.mod, vgm(0.3,"Gau",3000,0.05))
-plot(v.mod, v.fit)
+v.fitJ12 <- fit.variogram(v.modJ12, vgm(0.5,"Gau",3000,0.01))
+plot(v.modJ12, v.fitJ12)
+v.fitA12 <- fit.variogram(v.modA12, vgm(0.3,"Gau",3000,0.02))
+plot(v.modA12, v.fitA12)
+#v.fitA13 <- fit.variogram(v.modA13, vgm(0.3,"Gau",3000,0.02))
+#plot(v.modA13, v.fitA13)
+v.fitA14 <- fit.variogram(v.modA14, vgm(0.3,"Gau",3000,0.02))
+plot(v.modA14, v.fitA14)
+v.fitA15 <- fit.variogram(v.modA15, vgm(0.25,"Gau",2000,0.01))
+plot(v.modA15, v.fitA15)
 
- #Obtenir le "minimised criterion - weighed sum of square errors from the non-linear regression"
-attr(v.fit, "SSErr")
+#Obtenir le "minimised criterion - weighed sum of square errors from the non-linear regression"
+attr(v.fitJ12, "SSErr")
+attr(v.fitA12, "SSErr")
+#attr(v.fitA13, "SSErr")
+attr(v.fitA14, "SSErr")
+attr(v.fitA15, "SSErr")
 
 ##=============##
 ##INTERPOLATION##
 ##=============##
 
-#Créer un polygone autour des points (à partir de l'enveloppe convexe)
-ch <- chull(dA12@coords[,1],dA12@coords[,2])
-ch_poly<- coordinates(dA12)[c(ch, ch[1]), ] #Fermer le polygone
-poly <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_poly)), ID=1)))
+#Créer un polygone autour des points (à partir de l'enveloppe convexe) 
+#**Juin 2012**
+chJ12 <- chull(dJ12@coords[,1],dJ12@coords[,2])
+ch_polyJ12<- coordinates(dJ12)[c(chJ12, chJ12[1]), ] #Fermer le polygone
+polyJ12 <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_polyJ12)), ID=1)))
+#**Août 2012**
+chA12 <- chull(dA12@coords[,1],dA12@coords[,2])
+ch_polyA12<- coordinates(dA12)[c(chA12, chA12[1]), ] #Fermer le polygone
+polyA12 <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_polyA12)), ID=1)))
+#**Août 2013**
+#chA13 <- chull(dA13@coords[,1],dA13@coords[,2])
+#ch_polyA13<- coordinates(dA13)[c(chA13, chA13[1]), ] #Fermer le polygone
+#polyA13 <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_polyA13)), ID=1)))
+#**Août 2014**
+chA14 <- chull(dA14@coords[,1],dA14@coords[,2])
+ch_polyA14<- coordinates(dA14)[c(chA14, chA14[1]), ] #Fermer le polygone
+polyA14 <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_polyA14)), ID=1)))
+#**Août 2015**
+chA15 <- chull(dA15@coords[,1],dA15@coords[,2])
+ch_polyA15<- coordinates(dA15)[c(chA15, chA15[1]), ] #Fermer le polygone
+polyA15 <- sp::SpatialPolygons(list(Polygons(list(Polygon(ch_polyA15)), ID=1)))
+
 
 #Créer un raster pour enregistrer les résultats de l'interpolation
-r <- setValues(raster::raster(ext=extent(poly),crs = CRS, resolution=60),0)
-rm <- raster::mask(r, poly) 
-grid <- as(rm, "SpatialGridDataFrame")
+#**Juin 2012**
+rJ12 <- setValues(raster::raster(ext=extent(polyJ12),crs = CRS, resolution=60),0)
+rmJ12 <- raster::mask(rJ12, polyJ12) 
+gridJ12 <- as(rmJ12, "SpatialGridDataFrame")
+#**Août 2012**
+rA12 <- setValues(raster::raster(ext=extent(polyA12),crs = CRS, resolution=60),0)
+rmA12 <- raster::mask(rA12, polyA12) 
+gridA12 <- as(rmA12, "SpatialGridDataFrame")
+#**Août 2013**
+#rA13 <- setValues(raster::raster(ext=extent(polyA13),crs = CRS, resolution=60),0)
+#rmA13 <- raster::mask(rA13, polyA13) 
+#gridA13 <- as(rmA13, "SpatialGridDataFrame")
+#**Août 2014**
+rA14 <- setValues(raster::raster(ext=extent(polyA14),crs = CRS, resolution=60),0)
+rmA14 <- raster::mask(rA14, polyA14) 
+gridA14 <- as(rmA14, "SpatialGridDataFrame")
+#**Août 2015**
+rA15 <- setValues(raster::raster(ext=extent(polyA15),crs = CRS, resolution=60),0)
+rmA15 <- raster::mask(rA15, polyA15) 
+gridA15 <- as(rmA15, "SpatialGridDataFrame")
 
 #Kriger
-krig <- krige(Zphoto ~ 1, dA12, grid, model=v.fit)
+krigJ12 <- krige(Zphoto ~ 1, dJ12, gridJ12, model=v.fitJ12)
+krigA12 <- krige(Zphoto ~ 1, dA12, gridA12, model=v.fitA12)
+#krigA13 <- krige(Zphoto ~ 1, dA13, gridA13, model=v.fitA13)
+krigA14 <- krige(Zphoto ~ 1, dA14, gridA14, model=v.fitA14)
+krigA15 <- krige(Zphoto ~ 1, dA15, gridA15, model=v.fitA15)
 
 ##================##
 ##CROSS-VALIDATION##
 ##================##
 
-crossval.Gau <- krige(Zphoto ~ 1, dA12[-1,], dA12[1,], model = v.fit) #, maxdist=200)
+#Juin 2012
+crossval.GauJ12 <- krige(Zphoto ~ 1, dJ12[-1,], dJ12[1,], model = v.fitJ12) #, maxdist=200)
+for (i in 2:nrow(dJ12)){
+  kJ12 <- krige(Zphoto ~ 1, dJ12[-i,], dJ12[i,], model = v.fitJ12, maxdist=200)
+  crossval.GauJ12=rbind(crossval.GauJ12,kJ12);
+}
+#Août 2012
+crossval.GauA12 <- krige(Zphoto ~ 1, dA12[-1,], dA12[1,], model = v.fitA12) #, maxdist=200)
 for (i in 2:nrow(dA12)){
-  k <- krige(Zphoto ~ 1, dA12[-i,], dA12[i,], model = v.fit, maxdist=200)
-  crossval.Gau=rbind(crossval.Gau,k);
+  kA12 <- krige(Zphoto ~ 1, dA12[-i,], dA12[i,], model = v.fitA12, maxdist=200)
+  crossval.GauA12=rbind(crossval.GauA12,kA12);
+}
+#Août 2013
+#crossval.GauA13 <- krige(Zphoto ~ 1, dA13[-1,], dA13[1,], model = v.fitA13) #, maxdist=200)
+#for (i in 2:nrow(dA13)){
+  #kA13 <- krige(Zphoto ~ 1, dA13[-i,], dA13[i,], model = v.fitA13, maxdist=200)
+  #crossval.GauA13=rbind(crossval.GauA13,kA13);
+#}
+#Août 2014
+crossval.GauA14 <- krige(Zphoto ~ 1, dA14[-1,], dA14[1,], model = v.fitA14) #, maxdist=200)
+for (i in 2:nrow(dA14)){
+  kA14 <- krige(Zphoto ~ 1, dA14[-i,], dA14[i,], model = v.fitA14, maxdist=200)
+  crossval.GauA14=rbind(crossval.GauA14,kA14);
+}
+#Août 2015
+crossval.GauA15 <- krige(Zphoto ~ 1, dA15[-1,], dA15[1,], model = v.fitA15) #, maxdist=200)
+for (i in 2:nrow(dA15)){
+  kA15 <- krige(Zphoto ~ 1, dA15[-i,], dA15[i,], model = v.fitA15, maxdist=200)
+  crossval.GauA15=rbind(crossval.GauA15,kA15);
 }
 
-plot(dA12$Zphoto,crossval.Gau$var1.pred,main="Gau")
 
 #Coefficient de correlation de Pearson de la cross-validation
-cor(dA12$Zphoto,crossval.Gau$var1.pred) #0.9913213
+cor(dJ12$Zphoto,crossval.GauJ12$var1.pred,use = "complete.obs") #0.9923737
+cor(dA12$Zphoto,crossval.GauA12$var1.pred) #0.9798116
+#(dA13$Zphoto,crossval.GauA13$var1.pred)
+cor(dA14$Zphoto,crossval.GauA14$var1.pred) #0.9800733
+cor(dA15$Zphoto,crossval.GauA15$var1.pred) #0.9813889
+
+#Graphique crossvalidation et exportation
+
+pdf("Interpolated_maps/Cross_validation.pdf")
+par(mfrow=c(2,2),mar=c(4,4,2,3),mgp=c(3,1,0))
+plot(dJ12$Zphoto,crossval.GauJ12$var1.pred,main="Juin 2012",ylab="Predicted depth (m)", xlab="Measured depth (m)",las=1)
+legend("topleft","r = 0.99",bty="n")
+plot(dA12$Zphoto,crossval.GauA12$var1.pred,main="Août 2012",ylab="Predicted depth (m)", xlab="Measured depth (m)",las=1)
+legend("topleft","r = 0.98",bty="n")
+#plot(dA13$Zphoto,crossval.GauA13$var1.pred,main="Gau",ylab="Predicted depth (m)", xlab="Measured depth (m)",las=1)
+#legend("topleft","r = NA",bty="n")
+plot(dA14$Zphoto,crossval.GauA14$var1.pred,main="Août 2014",ylab="Predicted depth (m)", xlab="Measured depth (m)",las=1)
+legend("topleft","r = 0.98",bty="n")
+plot(dA15$Zphoto,crossval.GauA15$var1.pred,main="Août 2015",ylab="Predicted depth (m)", xlab="Measured depth (m)",las=1)
+legend("topleft","r = 0.98",bty="n")
+dev.off()
 
 
 ##==================##
 ##EXPORTER LE RASTER## 
 ##==================##
 
-writeGDAL(krig["var1.pred"], fname = "Interpolated_maps/Depth_ZPHOTO_LSPA2012.tif", drivername = "GTiff")
-writeGDAL(krig["var1.var"], fname = "Interpolated_maps/DepthError_ZPHOTO_LSPA2012.tif", drivername = "GTiff")
-
+writeGDAL(krigJ12["var1.pred"], fname = "Interpolated_maps/Zphoto/Depth_ZPHOTO_LSPJ2012.tif", drivername = "GTiff")
+writeGDAL(krigJ12["var1.var"], fname = "Interpolated_maps/Zphoto/DepthError_ZPHOTO_LSPJ2012.tif", drivername = "GTiff")
+writeGDAL(krigA12["var1.pred"], fname = "Interpolated_maps/Zphoto/Depth_ZPHOTO_LSPA2012.tif", drivername = "GTiff")
+writeGDAL(krigA12["var1.var"], fname = "Interpolated_maps/Zphoto/DepthError_ZPHOTO_LSPA2012.tif", drivername = "GTiff")
+#writeGDAL(krigA13["var1.pred"], fname = "Interpolated_maps/Zphoto/Depth_ZPHOTO_LSPA2013.tif", drivername = "GTiff")
+#writeGDAL(krigA13["var1.var"], fname = "Interpolated_maps/Zphoto/DepthError_ZPHOTO_LSPA2013.tif", drivername = "GTiff")
+writeGDAL(krigA14["var1.pred"], fname = "Interpolated_maps/Zphoto/Depth_ZPHOTO_LSPA2014.tif", drivername = "GTiff")
+writeGDAL(krigA14["var1.var"], fname = "Interpolated_maps/Zphoto/DepthError_ZPHOTO_LSPA2014.tif", drivername = "GTiff")
+writeGDAL(krigA15["var1.pred"], fname = "Interpolated_maps/Zphoto/Depth_ZPHOTO_LSPA2015.tif", drivername = "GTiff")
+writeGDAL(krigA15["var1.var"], fname = "Interpolated_maps/Zphoto/DepthError_ZPHOTO_LSPA2015.tif", drivername = "GTiff")
 
 
 
