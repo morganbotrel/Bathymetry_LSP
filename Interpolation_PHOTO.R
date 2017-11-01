@@ -1,4 +1,4 @@
-#INTERPOLATION PAR KRIGEAGE DES PROFONDEURS PAR RAPPORT AU ZÉRO DES CARTES
+#INTERPOLATION PAR KRIGEAGE DES PROFONDEURS LORS DE LA PRISE DE PHOTOAÉRIENNES
 
 #Nettoyer l'espace de travail
 rm(list=ls())
@@ -15,14 +15,14 @@ library(rgdal)
 #PRÉPARER LES DONNÉES##
 ##===================##
 
-#Ouvrir les données d'échosondage de juin 2012
+#Ouvrir les données d'échosondage de toutes les années
 depth_J2012 <- read.table("./Corrected_data/DepthPHOTO_LSPJ2012.csv",header=TRUE,sep=",")
 depth_A2012 <- read.table("./Corrected_data/DepthPHOTO_LSPA2012.csv",header=TRUE,sep=",")
 #depth_A2013 <- read.table("./Corrected_data/DepthPHOTO_LSPA2013.csv",header=TRUE,sep=",") #En attente de la date de photo
 depth_A2014 <- read.table("./Corrected_data/DepthPHOTO_LSPA2014.csv",header=TRUE,sep=",")
 depth_A2015 <- read.table("./Corrected_data/DepthPHOTO_LSPA2015.csv",header=TRUE,sep=",")
 
-#Pour limiter les calculs, faire la moyenne à toutes les 60 observations
+#Pour limiter les calculs, faire la moyenne à toutes les 25 observations
 n_rowmeans <- function(df, n){
   aggregate(x = df,
             by = list(gl(ceiling(nrow(df)/n),n)[1:nrow(df)]),
@@ -283,7 +283,7 @@ cor(dA15$Zphoto,crossval.GauA15$var1.pred) #0.9813889
 
 #Graphique crossvalidation et exportation
 
-pdf("Interpolated_maps/Cross_validation.pdf")
+pdf("Interpolated_maps/Zphoto/Cross_validation.pdf")
 par(mfrow=c(2,2),mar=c(4,4,2,3),mgp=c(3,1,0))
 plot(dJ12$Zphoto,crossval.GauJ12$var1.pred,main="Juin 2012",ylab="Predicted depth (m)", xlab="Measured depth (m)",las=1)
 legend("topleft","r = 0.99",bty="n")
