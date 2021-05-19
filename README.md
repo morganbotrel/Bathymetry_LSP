@@ -1,4 +1,4 @@
-﻿## Bathymetry_LSP ##
+## Bathymetry_LSP ##
 Mis à jour le 14/09/2017
 
 ## DESCRIPTION ##

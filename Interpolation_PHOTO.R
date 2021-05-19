@@ -16,11 +16,11 @@ library(rgdal)
 ##===================##
 
 #Ouvrir les données d'échosondage de toutes les années
-depth_J2012 <- read.table("./Corrected_data/DepthPHOTO_LSPJ2012.csv",header=TRUE,sep=",")
-depth_A2012 <- read.table("./Corrected_data/DepthPHOTO_LSPA2012.csv",header=TRUE,sep=",")
-#depth_A2013 <- read.table("./Corrected_data/DepthPHOTO_LSPA2013.csv",header=TRUE,sep=",") #En attente de la date de photo
-depth_A2014 <- read.table("./Corrected_data/DepthPHOTO_LSPA2014.csv",header=TRUE,sep=",")
-depth_A2015 <- read.table("./Corrected_data/DepthPHOTO_LSPA2015.csv",header=TRUE,sep=",")
+depth_J2012 <- read.table("data/old/Corrected_data/DepthPHOTO_LSPJ2012.csv",header=TRUE,sep=",")
+depth_A2012 <- read.table("data/old/Corrected_data/DepthPHOTO_LSPA2012.csv",header=TRUE,sep=",")
+#depth_A2013 <- read.table("data/old/Corrected_data/DepthPHOTO_LSPA2013.csv",header=TRUE,sep=",") #En attente de la date de photo
+depth_A2014 <- read.table("data/old/Corrected_data/DepthPHOTO_LSPA2014.csv",header=TRUE,sep=",")
+depth_A2015 <- read.table("data/old/Corrected_data/DepthPHOTO_LSPA2015.csv",header=TRUE,sep=",")
 
 #Pour limiter les calculs, faire la moyenne à toutes les 25 observations
 n_rowmeans <- function(df, n){
